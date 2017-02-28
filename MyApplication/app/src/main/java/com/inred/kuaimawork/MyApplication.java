@@ -1,5 +1,6 @@
 package com.inred.kuaimawork;
 
+import android.app.Activity;
 import android.app.Application;
 import android.os.Build;
 import android.view.Gravity;
@@ -12,6 +13,7 @@ import com.inred.kuaimawork.exception.CrashHandler;
 import com.inred.kuaimawork.util.FileSystemHelper;
 import com.inred.kuaimawork.util.ScreenUtils;
 import com.inred.kuaimawork.util.StringConstants;
+import com.inred.kuaimawork.util.Utils;
 import com.nostra13.universalimageloader.BuildConfig;
 import com.nostra13.universalimageloader.cache.disc.impl.UnlimitedDiskCache;
 import com.nostra13.universalimageloader.cache.disc.naming.Md5FileNameGenerator;
@@ -23,6 +25,7 @@ import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Stack;
 
 /**
  * Created by inred on 2016/10/26.
@@ -39,11 +42,13 @@ public class MyApplication extends Application {
         return appcation;
     }
 
+    private Stack<Activity> activityStack;
+
     @Override
     public void onCreate() {
         super.onCreate();
         appcation = this;
-
+        Utils.init(this);
         CrashHandler crashHandler = CrashHandler.getInstance();
         crashHandler.init(getApplicationContext());
 
@@ -102,6 +107,73 @@ public class MyApplication extends Application {
         toast.setView(linearLayout);
         toast.show();
     }
+
+
+    /**
+     * remove all(unless one) activity from list
+     *
+     * @param cls
+     */
+    public void removeAllActivityExceptOne(Class cls) {
+        while (true) {
+            Activity activity = currentActivity();
+            if (activity == null) {
+                break;
+            }
+            if (activity.getClass().equals(cls)) {
+                break;
+            }
+            removeActivity(activity);
+        }
+    }
+
+    /**
+     * currentActivity
+     *
+     * @return
+     */
+    public Activity currentActivity() {
+        Activity activity=null;
+        if (activityStack.size() > 0)
+            activity = activityStack.lastElement();
+        return activity;
+    }
+
+    /**
+     * remove activity from list
+     *
+     * @param activity
+     */
+    public void removeActivity(Activity activity) {
+        if (activity != null) {
+            activity.finish();
+            activityStack.remove(activity);
+            activity = null;
+        }
+    }
+
+    /**
+     * remove last activity
+     */
+    public void removeActivity() {
+        Activity activity = activityStack.lastElement();
+        if (activity != null) {
+            activity.finish();
+            activity = null;
+        }
+    }
+
+    /**
+     * add activity in list
+     *
+     * @param activity
+     */
+    public void addActivity(Activity activity) {
+        if (activityStack == null)
+            activityStack = new Stack<Activity>();
+        activityStack.add(activity);
+    }
+
 
 
 
